@@ -61,7 +61,7 @@ Example command:
 python switchcraft.py --config tasks/pos_allostery.yaml 
 ```
 
-This runs the `pos_allostery` task: design a protein that scaffolds motif `1prw` in the apo state and loses the motif geometry when the ligand binds.
+This runs the `pos_allostery` task: design a protein that scaffolds motif `1prw` in the ligand-bound state and loses the motif geometry when the ligand unbinds.
 
 **Output** for each design is saved to `<outpath>/<motif>/design<N>/`:
 - `state<i>_sample<j>.pdb` — predicted structures (5 diffusion samples per state)
