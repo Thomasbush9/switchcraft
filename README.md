@@ -1,6 +1,6 @@
 # SwitchCraft
 
-Implementation of **SwitchCraft: A Programmatic Framework for Desigining State Switching Protein** (ICML 2026) by Bowen Jing*, Mihir Bafna*, Anisha Parsan, Heyuan Michael Ni, David Kwabi-Addo, Bryan Bryson, Adam Klivans, Bonnie Berger.
+Implementation of [**SwitchCraft: A Programmatic Framework for Desigining State Switching Protein**](https://arxiv.org/abs/2605.31236) (ICML 2026) by Bowen Jing*, Mihir Bafna*, Anisha Parsan, Heyuan Michael Ni, David Kwabi-Addo, Bryan Bryson, Adam Klivans, Bonnie Berger.
 
 SwitchCraft is a framework for designing state-switching proteins via gradient-based optimization through AF3-style co-folding models (here, Boltz-1). Given a multistate design objective, SwitchCraft constructs and optimizes a compositional loss function to design a sequence that exhibits the desired multistate behavior. Please see our preprint for detailed methodology and benchmarks. 
 
