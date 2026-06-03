@@ -13,7 +13,7 @@ From: python:3.12-slim
 %post
     export DEBIAN_FRONTEND=noninteractive
     apt-get update && apt-get install -y --no-install-recommends \
-        git build-essential \
+        git build-essential wget ca-certificates \
         && rm -rf /var/lib/apt/lists/*
 
     pip install --no-cache-dir --upgrade pip
@@ -24,7 +24,16 @@ From: python:3.12-slim
     pip install -e /opt/switchcraft/boltz
     pip install prody
 
+    python << 'PY'
+from boltz.main import download
+from pathlib import Path
+cache = Path("/opt/switchcraft/boltz")
+cache.mkdir(parents=True, exist_ok=True)
+download(cache)
+PY
+    cd /opt/switchcraft/LigandMPNN && bash get_model_params.sh ./model_params  
 
+    echo "SwitchCraft container built successfully"
 
 %environment
     export BOLTZ_USE_CUEQ=1
@@ -35,7 +44,7 @@ From: python:3.12-slim
     exec python switchcraft.py "$@"
 
 %test
-# Runs at end of build. Boltz weights (ccd.pkl, boltz1_conf.ckpt) are bind-mounted at runtime.
+# Runs at end of build. Boltz/LigandMPNN weights are baked in under %post.
     echo "Testing PyTorch and CUDA"
     python -c "import torch; print('torch', torch.__version__); print('cuda available', torch.cuda.is_available())"
 
@@ -64,7 +73,7 @@ if os.path.isfile(ccd):
     from designer import MultistateDesigner
     print("designer ok (ccd.pkl present)")
 else:
-    print("SKIP designer: bind boltz/ (ccd.pkl) at runtime per README")
+    print("SKIP designer: boltz/ccd.pkl missing (download step failed?)")
 print("switchcraft import checks passed")
 EOF
 
@@ -74,6 +83,5 @@ EOF
 
 
 %help
-    SwitchCraft container. Bind Boltz weights at runtime:
-      -B $PWD/boltz:/opt/switchcraft/boltz
-    Run with GPU: singularity exec --nv switchcraft.sif python switchcraft.py --config tasks/...
+    SwitchCraft with Boltz + LigandMPNN weights pre-downloaded.
+    Run: singularity exec --nv switchcraft.sif --config tasks/pos_allostery.yaml
