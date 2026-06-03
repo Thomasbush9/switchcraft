@@ -51,6 +51,71 @@ cd LigandMPNN && bash get_model_params.sh ./model_params && cd ..
 
 ---
 
+## Singularity / Apptainer container
+
+For GPU clusters, a pre-built environment is provided under `containers/switchcraft.def`. The image installs SwitchCraft, Boltz, cuEquivariance, **Boltz weights** (`boltz/boltz1_conf.ckpt`, `boltz/ccd.pkl`), and **LigandMPNN weights** at build time, so routine runs do not need extra weight bind-mounts.
+
+### Build the image
+
+From the repository root (Linux; build requires network access):
+
+```bash
+apptainer build switchcraft.sif containers/switchcraft.def
+# or: singularity build switchcraft.sif containers/switchcraft.def
+```
+
+Build-time `%test` may print `libcuda.so.1` warnings and `cuda available False` without a GPU; that is expected. Use `--nv` at **runtime** on a GPU node.
+
+### Minimal interactive run
+
+On a GPU node, only the **output directory** on the host needs to be bound. Use config paths relative to `/opt/switchcraft` (same as the Quick Start examples under `tasks/`):
+
+```bash
+mkdir -p /scratch/${USER}/switchcraft_out
+
+apptainer exec --nv --pwd /opt/switchcraft \
+  -B /scratch/${USER}/switchcraft_out:/scratch/${USER}/switchcraft_out \
+  switchcraft.sif \
+  python switchcraft.py \
+    --config tasks/pos_allostery.yaml \
+    --outpath /scratch/${USER}/switchcraft_out \
+    --verbose
+```
+
+Built-in configs (`tasks/pos_allostery.yaml`, etc.) and `motifs/` are already in the image; you do not need to copy them unless you are customizing a design.
+
+**Custom YAML on the host:** bind the file into the image and pass its path under `/opt/switchcraft`, e.g. `-B /scratch/${USER}/my_design.yaml:/opt/switchcraft/my_design.yaml` and `--config my_design.yaml` (still use `--pwd /opt/switchcraft`).
+
+### SLURM
+
+`slurm_scripts/launch_switchcraft.slurm` wraps the same invocation. Replace the `#SBATCH` placeholders (`<partition>`, `<gpus_per_node>`, etc.) for your site, then submit:
+
+```bash
+mkdir -p /scratch/${USER}/switchcraft_out
+
+sbatch slurm_scripts/launch_switchcraft.slurm \
+  tasks/pos_allostery.yaml \
+  /path/to/switchcraft.sif \
+  /scratch/${USER}/switchcraft_out
+```
+
+| Argument | Meaning |
+|----------|---------|
+| `CONFIG_FILE` | YAML path inside the image (e.g. `tasks/pos_allostery.yaml`) |
+| `SWITCHCRAFT_IMAGE` | Path to `switchcraft.sif` |
+| `OUTPUT_DIR` | Host directory for results (bind-mounted) |
+
+**Interactive test** (e.g. inside `salloc` on a GPU node, no `sbatch`):
+
+```bash
+bash slurm_scripts/launch_switchcraft.slurm \
+  tasks/pos_allostery.yaml \
+  /path/to/switchcraft.sif \
+  /scratch/${USER}/switchcraft_out
+```
+
+---
+
 ## Quick Start
 
 Each design run is driven by a YAML config file that fully specifies the design problem. Template configs for example tasks live in `tasks/`.
@@ -74,7 +139,7 @@ Command line arguments that can be provided include
 - `--recycles`: Boltz recycling steps during optimization
 - `--ligandmpnn_seqs`: if >0, run LigandMPNN redesign producing N sequences per design
 - `--verbose`: whether to use progress bars (recommended)
-- `--out`: output directory
+- `-o` / `--outpath`: output directory (README shorthand: output dir)
 - `--num_designs`: total number of designs
 
 ---
